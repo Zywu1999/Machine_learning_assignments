@@ -24,7 +24,7 @@ class GeneticAlgorithm(object):
                  mutation_rate=0.01,
                  selection_strategy='roulette_wheel',
                  **kw):
-        self.translate_bound(bound)#平移区间
+        self._translate_bound(bound)#平移区间
         self.evaluator=evaluator
         kw['selection_strategy']=selection_strategy
         self.fitness={}#用于记录过程
@@ -32,19 +32,19 @@ class GeneticAlgorithm(object):
         self.fitness['best']=[]
         self.fitness['best_solution']=[]
         self.solution=np.zeros((len(bound),1))
-        self.run(iteration_num,dna_size,population_size,crossover_rate,mutation_rate,kw)
+        self._run(iteration_num,dna_size,population_size,crossover_rate,mutation_rate,kw)
 
     
-    def run(self,iteration_num,dna_size,population_size,crossover_rate,mutation_rate,kw):
+    def _run(self,iteration_num,dna_size,population_size,crossover_rate,mutation_rate,kw):
         '''
         运行整个训练过程初始化->repeat{交叉->变异->选择}
         '''
-        population=self.init_population(population_size,dna_size)
+        population=self._init_population(population_size,dna_size)
         for i in range(iteration_num):
-            child=self.mutate(self.crossover(population,crossover_rate),mutation_rate)
-            population=self.select(population,kw)
+            child=self._mutate(self._crossover(population,crossover_rate),mutation_rate)
+            population=self._select(population,kw)
 
-    def mutate(self, population,mutation_rate):
+    def _mutate(self, population,mutation_rate):
         '''
         变异函数，构建一个bool矩阵1变异，0不变异，即进行异或运算
         '''
@@ -53,19 +53,19 @@ class GeneticAlgorithm(object):
         return mutation_children
 
     
-    def crossover(self, population,crossover_rate):
+    def _crossover(self, population,crossover_rate):
         '''
         交叉函数，进行种群数次迭代，随机选择交叉的对象
         '''
         copy_parents=population.copy()
         np.random.shuffle(copy_parents)#打乱复制的数组
-        crossover_points=np.random.randint(0,2,size=population.shape).astype(bool)
+        crossover_points=np.random.randint(0,2,size=population.shape).astype(bool)#对应位置为True的地方会交换
         crossover_population=np.random.rand(population.shape[0])<crossover_rate
         crossover_points=crossover_points*crossover_population.reshape(population.shape[0],1)
         population[crossover_points]=copy_parents[crossover_points]
         return  population                      
 
-    def translate_dna(self, dna_sequences):
+    def _translate_dna(self, dna_sequences):
         '''
         将DNA序列转化为数值，第一步将二进制映射到[0,1]，第二步缩放上界倍数并平移回原区间
         '''
@@ -75,12 +75,12 @@ class GeneticAlgorithm(object):
         result=temp/ float(2**dna_size-1) * self.upper_bound+self.origin_lower_bound
         return  result#注意返回的数组shape=(种群数，参数数)
 
-    def select(self, offspring,kw):
+    def _select(self, offspring,kw):
         '''
         从子代中选择,4种选择策略，通过字符串指定
         '''
         population_size=offspring.shape[0]
-        fitness=self.compute_fitness(offspring)
+        fitness=self._compute_fitness(offspring)
         fitness=np.abs(fitness-np.max(fitness))+1e-13#最大最小转换
         index=None
         if kw['selection_strategy']=='rank':
@@ -108,11 +108,11 @@ class GeneticAlgorithm(object):
         return offspring[index]
 
     
-    def compute_fitness(self, population):
+    def _compute_fitness(self, population):
         '''
         计算适应度,记录每步迭代的结果
         '''
-        solutions=self.translate_dna(population)
+        solutions=self._translate_dna(population)
         fitness=self.evaluator(solutions)
         self.fitness['mean'].append(np.sum(fitness)/fitness.size)
         self.fitness['best'].append(np.min(fitness))
@@ -125,7 +125,7 @@ class GeneticAlgorithm(object):
         '''
         return self.fitness
     
-    def translate_bound(self,bound):
+    def _translate_bound(self,bound):
         '''
         转换区间到[0,n],代入evaluator中时加上原本的下界
         '''
@@ -136,7 +136,7 @@ class GeneticAlgorithm(object):
         self.upper_bound=self.upper_bound.T
         self.origin_lower_bound=self.origin_lower_bound.T
 
-    def init_population(self,population_size,dna_size):
+    def _init_population(self,population_size,dna_size):
         '''
         生成第一代,使用二维数组表示shape=（种群数，参数数量*DNA长度）每DNA长度位表示一个参数
         '''
