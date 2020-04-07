@@ -8,7 +8,7 @@
 
 import numpy as np 
 
-class EvaluationStrategyBasic(object):
+class EvolutionStrategyBasic(object):
     '''
     基类
     '''
@@ -75,7 +75,7 @@ class EvaluationStrategyBasic(object):
 
 
 
-class ES_1_1(EvaluationStrategyBasic):
+class ES_1_1(EvolutionStrategyBasic):
     '''
     (1+1)ES
     '''
@@ -117,7 +117,7 @@ class ES_1_1(EvaluationStrategyBasic):
         self.result['best_solution'].append(offspring[np.argmin(fitness)]) 
         return child.reshape(1,-1)
     
-class ES_mu_lambda(EvaluationStrategyBasic):
+class ES_mu_lambda(EvolutionStrategyBasic):
     '''
     μ+λ与μ,λ
     '''
